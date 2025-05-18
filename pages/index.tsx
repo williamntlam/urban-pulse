@@ -63,6 +63,7 @@ const Home = () => {
     glNonNull.uniform2f(resLoc, canvas.width, canvas.height);
 
     const texture = glNonNull.createTexture();
+    const texture2 = glNonNull.createTexture();
     glNonNull.bindTexture(glNonNull.TEXTURE_2D, texture);
     const size = canvas.width * canvas.height;
     const initialData = new Uint8Array(size * 4);
@@ -75,14 +76,41 @@ const Home = () => {
     glNonNull.texParameteri(glNonNull.TEXTURE_2D, glNonNull.TEXTURE_MIN_FILTER, glNonNull.NEAREST);
     glNonNull.texParameteri(glNonNull.TEXTURE_2D, glNonNull.TEXTURE_MAG_FILTER, glNonNull.NEAREST);
 
+    // Set up second texture
+    glNonNull.bindTexture(glNonNull.TEXTURE_2D, texture2);
+    glNonNull.texImage2D(glNonNull.TEXTURE_2D, 0, glNonNull.RGBA, canvas.width, canvas.height, 0,
+                  glNonNull.RGBA, glNonNull.UNSIGNED_BYTE, initialData);
+    glNonNull.texParameteri(glNonNull.TEXTURE_2D, glNonNull.TEXTURE_MIN_FILTER, glNonNull.NEAREST);
+    glNonNull.texParameteri(glNonNull.TEXTURE_2D, glNonNull.TEXTURE_MAG_FILTER, glNonNull.NEAREST);
+
+    // Create framebuffer for ping-pong rendering
+    const framebuffer = glNonNull.createFramebuffer();
+    glNonNull.bindFramebuffer(glNonNull.FRAMEBUFFER, framebuffer);
+
     const stateLoc = glNonNull.getUniformLocation(program, 'u_state');
     glNonNull.uniform1i(stateLoc, 0);
 
+    let currentTexture = texture;
+    let nextTexture = texture2;
+
     function render() {
-      glNonNull.clear(glNonNull.COLOR_BUFFER_BIT);
-      glNonNull.activeTexture(glNonNull.TEXTURE0);
-      glNonNull.bindTexture(glNonNull.TEXTURE_2D, texture);
+      // Update simulation
+      glNonNull.bindFramebuffer(glNonNull.FRAMEBUFFER, framebuffer);
+      glNonNull.framebufferTexture2D(glNonNull.FRAMEBUFFER, glNonNull.COLOR_ATTACHMENT0, glNonNull.TEXTURE_2D, nextTexture, 0);
+      glNonNull.viewport(0, 0, canvas.width, canvas.height);
+      glNonNull.bindTexture(glNonNull.TEXTURE_2D, currentTexture);
       glNonNull.drawArrays(glNonNull.TRIANGLES, 0, 6);
+
+      // Render to screen
+      glNonNull.bindFramebuffer(glNonNull.FRAMEBUFFER, null);
+      glNonNull.viewport(0, 0, canvas.width, canvas.height);
+      glNonNull.clear(glNonNull.COLOR_BUFFER_BIT);
+      glNonNull.bindTexture(glNonNull.TEXTURE_2D, nextTexture);
+      glNonNull.drawArrays(glNonNull.TRIANGLES, 0, 6);
+
+      // Swap textures
+      [currentTexture, nextTexture] = [nextTexture, currentTexture];
+
       requestAnimationFrame(render);
     }
 
