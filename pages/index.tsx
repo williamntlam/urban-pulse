@@ -16,6 +16,9 @@ const Home = () => {
       return;
     }
 
+    const width = canvas.width;
+    const height = canvas.height;
+
     const glNonNull = gl;  // TypeScript now knows this is non-null
 
     function createShader(type: number, source: string): WebGLShader {
@@ -60,25 +63,25 @@ const Home = () => {
     glNonNull.vertexAttribPointer(posLoc, 2, glNonNull.FLOAT, false, 0, 0);
 
     const resLoc = glNonNull.getUniformLocation(program, 'u_resolution');
-    glNonNull.uniform2f(resLoc, canvas.width, canvas.height);
+    glNonNull.uniform2f(resLoc, width, height);
 
     const texture = glNonNull.createTexture();
     const texture2 = glNonNull.createTexture();
     glNonNull.bindTexture(glNonNull.TEXTURE_2D, texture);
-    const size = canvas.width * canvas.height;
+    const size = width * height;
     const initialData = new Uint8Array(size * 4);
     for (let i = 0; i < size; i++) {
       initialData[i * 4] = Math.random() > 0.9 ? 255 : 0;
       initialData[i * 4 + 3] = 255;
     }
-    glNonNull.texImage2D(glNonNull.TEXTURE_2D, 0, glNonNull.RGBA, canvas.width, canvas.height, 0,
+    glNonNull.texImage2D(glNonNull.TEXTURE_2D, 0, glNonNull.RGBA, width, height, 0,
                   glNonNull.RGBA, glNonNull.UNSIGNED_BYTE, initialData);
     glNonNull.texParameteri(glNonNull.TEXTURE_2D, glNonNull.TEXTURE_MIN_FILTER, glNonNull.NEAREST);
     glNonNull.texParameteri(glNonNull.TEXTURE_2D, glNonNull.TEXTURE_MAG_FILTER, glNonNull.NEAREST);
 
     // Set up second texture
     glNonNull.bindTexture(glNonNull.TEXTURE_2D, texture2);
-    glNonNull.texImage2D(glNonNull.TEXTURE_2D, 0, glNonNull.RGBA, canvas.width, canvas.height, 0,
+    glNonNull.texImage2D(glNonNull.TEXTURE_2D, 0, glNonNull.RGBA, width, height, 0,
                   glNonNull.RGBA, glNonNull.UNSIGNED_BYTE, initialData);
     glNonNull.texParameteri(glNonNull.TEXTURE_2D, glNonNull.TEXTURE_MIN_FILTER, glNonNull.NEAREST);
     glNonNull.texParameteri(glNonNull.TEXTURE_2D, glNonNull.TEXTURE_MAG_FILTER, glNonNull.NEAREST);
@@ -97,13 +100,13 @@ const Home = () => {
       // Update simulation
       glNonNull.bindFramebuffer(glNonNull.FRAMEBUFFER, framebuffer);
       glNonNull.framebufferTexture2D(glNonNull.FRAMEBUFFER, glNonNull.COLOR_ATTACHMENT0, glNonNull.TEXTURE_2D, nextTexture, 0);
-      glNonNull.viewport(0, 0, canvas.width, canvas.height);
+      glNonNull.viewport(0, 0, width, height);
       glNonNull.bindTexture(glNonNull.TEXTURE_2D, currentTexture);
       glNonNull.drawArrays(glNonNull.TRIANGLES, 0, 6);
 
       // Render to screen
       glNonNull.bindFramebuffer(glNonNull.FRAMEBUFFER, null);
-      glNonNull.viewport(0, 0, canvas.width, canvas.height);
+      glNonNull.viewport(0, 0, width, height);
       glNonNull.clear(glNonNull.COLOR_BUFFER_BIT);
       glNonNull.bindTexture(glNonNull.TEXTURE_2D, nextTexture);
       glNonNull.drawArrays(glNonNull.TRIANGLES, 0, 6);
